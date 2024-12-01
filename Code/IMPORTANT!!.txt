@@ -1,0 +1,5 @@
+What to do :
+
+1- create new flutter project with command : flutter create <PROJECT_NAME>
+2- replace the pubspec.yaml file in your project folder with this pubspec.yaml file
+3- copy the rest of the code .dart files in the lib folder
