@@ -6,6 +6,7 @@ import "plant_type_page.dart";
 import "plant.dart";
 import "room.dart";
 import "package:reorderables/reorderables.dart";
+import "add_device_page.dart";
 
 class RoomPage extends StatefulWidget{
   final Room room;
@@ -18,11 +19,13 @@ class RoomPage extends StatefulWidget{
 class RoomPageState extends State<RoomPage>{
 
   void _showAddPlantDialog() {
-    final TextEditingController controller = TextEditingController();
+    final TextEditingController controller1 = TextEditingController();
+    final TextEditingController controller2 = TextEditingController();
     showDialog(
       context: context, 
       builder: (BuildContext context) {
         String plantName = "";
+        String deviceId = "";
         Plant plant = Plant(plantName);
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -43,7 +46,7 @@ class RoomPageState extends State<RoomPage>{
                     },
                   ),
                   TextField(
-                    controller: controller,
+                    controller: controller1,
                     readOnly: true,
                     decoration: const InputDecoration(hintText: "Select type of plant"),
                     onTap: () async {
@@ -58,8 +61,32 @@ class RoomPageState extends State<RoomPage>{
                         setState(() {
                           plant = selectedPlant;
                           plant.name = plantName;
-                          controller.text = plant.type;
+                          plant.deviceId = deviceId;
+                          controller1.text = plant.type;
                         });
+                      }
+                    },
+                  ),
+                  TextField(
+                    controller: controller2,
+                    readOnly: true,
+                    decoration: const InputDecoration(hintText: "Connect the plant to a device"),
+                    onTap: () async {
+                      String? selectedDevice = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddDevicePage(),
+                        ),
+                      );
+                      
+                      if(selectedDevice != null){
+                        print(selectedDevice);
+                        setState(() {
+                          deviceId = selectedDevice;
+                          plant.deviceId = deviceId;
+                          controller2.text = deviceId;
+                        });
+                        print(plant.deviceId);
                       }
                     },
                   ),
@@ -229,16 +256,6 @@ class RoomPageState extends State<RoomPage>{
             widget.room.plants.isEmpty ? const Center(
               child: Text("You currently have no plants"),
             )
-            // GridView.builder(
-            //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            //     crossAxisCount: 2,
-            //     mainAxisSpacing: 10,
-            //     crossAxisSpacing: 10,
-            //     childAspectRatio: 3 / 4,
-            //   ),
-            //   itemBuilder: (context, index) => _buildPlantUI(widget.room.plants[index]),
-            //   itemCount: widget.room.plants.length,
-            // ),
             : ReorderableWrap(
                 spacing: 15.0, // Space between items in the same row
                 runSpacing: 15.0, // Space between rows
@@ -299,24 +316,6 @@ class RoomPageState extends State<RoomPage>{
             fontWeight: FontWeight.bold,
           )
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.add),
-        //     onPressed: (){
-        //       setState(() {
-        //         plantList.add("debug plant $plantList.length + 1");
-        //       });
-        //     }),
-        //   IconButton(
-        //     icon: const Icon(Icons.remove),
-        //     onPressed: (){
-        //       if(plantList.isNotEmpty){
-        //         setState(() {
-        //           plantList.removeLast();
-        //         });
-        //       }
-        //     })
-        // ],
       ),
       body: Container(
         color: scheme.surface,

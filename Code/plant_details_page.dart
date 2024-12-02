@@ -1,5 +1,8 @@
 import "package:flutter/material.dart";
 import "plant.dart";
+import "package:http/http.dart" as http;
+import "dart:convert";
+import "dart:async";
 
 class PlantDetailsPage extends StatefulWidget {
   final Plant plant;
@@ -10,8 +13,56 @@ class PlantDetailsPage extends StatefulWidget {
 
 class PlantDetailsPageState extends State<PlantDetailsPage>{
   Map<String, bool> expansionStates = {"infos" : false, "Soil Moisture" : true, "Temperature" : true, "Light" : true };
+  final String apiUrl = "/channels/";
+  var headers = {
+    'Api-Key': "0I7HI6BMDAQX4CTG",
+  };
+  String apikey = "0I7HI6BMDAQX4CTG";
+  Map<String, dynamic> data = {};
 
-  Widget buildRetractableWidget(String title, {double height = 150 }){
+  Timer? _timer;
+
+  Future<void> fetchData() async {
+    try{
+      print(widget.plant.deviceId != "" ? widget.plant.deviceId : "nothing");
+      print(widget.plant.potDepth != 0 ? widget.plant.potDepth : "zero");
+      final response = await http.get(Uri.parse("https://api.thingspeak.com/channels/${widget.plant.deviceId}/feeds.json?api_key=$apikey&results=1"));
+
+      if(response.statusCode == 200) {
+        String responseBody = response.body;
+        var jsonData = jsonDecode(responseBody);
+        if(jsonData is Map && jsonData.containsKey("feeds")){
+          print(jsonData["feeds"][0]);
+          setState(() {
+            data = jsonData["feeds"][0];
+          });
+        }
+        else{
+          print("No plant names found in the response !!!!!!!");
+        }
+      }else{
+        print("Failed to load plants: ${response.statusCode} - ${response.reasonPhrase}");
+      }
+    }
+    catch(error){
+      print("Error fetching plant: $error");
+    }
+  }
+
+  void startPeriodicTask() {
+    _timer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      fetchData();
+    });
+  }
+
+  @override
+  initState(){
+    super.initState();
+    fetchData();
+    startPeriodicTask();
+  }
+
+  Widget buildRetractableWidget(String title, {double height = 150, String data = "test"}){
     bool isExpanded = expansionStates[title] ?? false;
     double width = MediaQuery.of(context).size.width - 20;
     return Container(
@@ -89,7 +140,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
             height: isExpanded ? height : 0,
             width: width,
             child: isExpanded 
-              ? Center(child: Text(title))
+              ? Center(child: Text(data))
               :null,
           ),
         ], 
@@ -103,13 +154,19 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
       children: [
         buildRetractableWidget("infos", height: 350),
         const Divider(color: Colors.transparent),
-        buildRetractableWidget("Soil Moisture"),
+        buildRetractableWidget("Temperature", data : data["field1"]?.toString() ?? "no data"),
         const Divider(color: Colors.transparent),
-        buildRetractableWidget("Temperature"),
+        buildRetractableWidget("Soil Moisture", data : data["field2"]?.toString() ?? "no data"),
         const Divider(color: Colors.transparent),
-        buildRetractableWidget("Light"),
+        buildRetractableWidget("Light", data : data["field3"]?.toString() ?? "no data"),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
   }
 
   @override

@@ -18,7 +18,7 @@ class Plant {
   double potDepth = 0;
   // @HiveField(6)
   String id = "";
-
+  String deviceId = "";
   Plant(this.name);
 
   Plant.withoutName(this.thumbnail, this.type, this.accessToken);

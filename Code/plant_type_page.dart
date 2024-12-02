@@ -2,7 +2,6 @@ import "package:flutter/material.dart";
 import "dart:convert";
 import "package:http/http.dart" as http;
 import "plant.dart";
-// import "dart:typed_data";
 
 class PlantTypePage extends StatefulWidget{
   const PlantTypePage({super.key});
@@ -21,16 +20,12 @@ class PlantTypePageState extends State<PlantTypePage>{
   List<Plant> plants = [];
 
   bool isLoading = false;
-  int currentPage = 1;
   String query = "";
-
-  //final ScrollController _scrollController = ScrollController();
 
   @override
   void initState(){
     super.initState();
     fetchPlantTypes("");
-    //_scrollController.addListener(_scrollListener);
   }
 
   Future<void> fetchPlantTypes(String query) async {
@@ -43,7 +38,6 @@ class PlantTypePageState extends State<PlantTypePage>{
       final http.StreamedResponse response;
       var queryParams = {
         'q': query,
-        // 'page': currentPage.toString(),
         'limit': "20",
         'thumbnails': 'true',
       };
@@ -62,30 +56,10 @@ class PlantTypePageState extends State<PlantTypePage>{
             plants = entities.map((entity) => Plant.withoutName(entity['thumbnail'], entity['entity_name'] as String, entity['access_token'])).toList();
             sortList(query);
           });
-
-          if(entities.length < 10) {
-            currentPage = 0;
-          } else {
-            currentPage++;
-          }
         }
         else{
           print("No plant names found in the response !!!!!!!");
         }
-        // if(page == 1){
-        //   setState(() {
-        //     commonNames = plant.map((plant) => plant['common_name'] as String?).whereType<String>().toList();
-        //     scientificNames = plant.map((plant) => plant['scientific_name'] as String?).whereType<String>().toList();            
-        //   });
-        // }
-        // else if(page > 1){
-        //   setState(() {
-        //     commonNames += plant.map((plant) => plant['common_name'] as String?).whereType<String>().toList();
-        //     scientificNames += plant.map((plant) => plant['scientific_name'] as String?).whereType<String>().toList();            
-        //   });
-
-        // }
-
       }else{
         print("Failed to load plants: ${response.statusCode} - ${response.reasonPhrase}");
       }
@@ -96,18 +70,8 @@ class PlantTypePageState extends State<PlantTypePage>{
       isLoading = false;
     }
   }
-
-  // void _scrollListener() {
-  //   if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent){
-  //     if(currentPage > 0){
-  //       fetchPlantTypes(query);
-  //     }
-  //   }
-  // }
-
   @override
   void dispose(){
-    //_scrollController.removeListener(_scrollListener);
     super.dispose();
   }
 
@@ -146,7 +110,6 @@ class PlantTypePageState extends State<PlantTypePage>{
                 ),
                 onChanged: (value) {
                   setState(() {
-                    currentPage = 1;
                     query = value;
                     plants.clear();
                   });

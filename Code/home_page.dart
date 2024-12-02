@@ -179,7 +179,7 @@ class HomePageState extends State<HomePage>{
                 children: [
                   Center(
                     child: Text(
-                      "test",
+                      "Click here to access your Plants",
                       style: TextStyle(fontSize: 14, color: Colors.black),
                     ),
                   ),
