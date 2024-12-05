@@ -47,7 +47,6 @@ class PlantTypePageState extends State<PlantTypePage>{
       response = await request.send();
 
       if(response.statusCode == 200) {
-        print("successful\n");
         String responseBody = await response.stream.bytesToString();
         var jsonData = jsonDecode(responseBody);
         if(jsonData is Map && jsonData.containsKey("entities")){

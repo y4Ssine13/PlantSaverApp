@@ -1,27 +1,44 @@
-// import "package:hive/hive.dart";
-
-// part "plant.g.dart";
-
-// @HiveType(typeId: 1)
 class Plant {
-  // @HiveField(0)
   String name = "";
-  // @HiveField(1)
   String type = "";
-  // @HiveField(2)
   String thumbnail = "";
-  // @HiveField(3)
   String accessToken = "";
-  // @HiveField(4)
   double potDiam = 0;
-  // @HiveField(5)
   double potDepth = 0;
-  // @HiveField(6)
   String id = "";
   String deviceId = "";
+
   Plant(this.name);
 
   Plant.withoutName(this.thumbnail, this.type, this.accessToken);
 
+  Plant.withAll({required this.name, required this.type, required this.thumbnail, 
+    required this.accessToken, required this.potDiam, required this.potDepth, required this.id,
+    required this.deviceId});
 
+  factory Plant.fromJson(Map<String, dynamic> json){
+    return Plant.withAll(
+      name: json["name"],
+      type: json["type"],
+      thumbnail: json["thumbnail"],
+      accessToken: json["accessToken"],
+      potDiam: json["potDiam"],
+      potDepth: json["potDepth"],
+      id: json["id"],
+      deviceId: json["deviceId"]
+    );
+  }
+
+  Map<String, dynamic> toJson(){
+    return {
+      "name": name,
+      "type": type,
+      "thumbnail": thumbnail,
+      "accessToken": accessToken,
+      "potDiam": potDiam,
+      "potDepth": potDepth,
+      "id": id,
+      "deviceId": deviceId
+    };
+  }
 }

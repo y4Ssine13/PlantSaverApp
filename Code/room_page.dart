@@ -10,7 +10,8 @@ import "add_device_page.dart";
 
 class RoomPage extends StatefulWidget{
   final Room room;
-  const RoomPage({super.key, required this.room});
+  final Function() onUpdated;
+  const RoomPage({super.key, required this.room, required this.onUpdated});
 
   @override
   RoomPageState createState() => RoomPageState();
@@ -121,6 +122,7 @@ class RoomPageState extends State<RoomPage>{
                 {
                   setState(() {
                     widget.room.plants.add(plant);
+                    widget.onUpdated();
                   });
                   Navigator.of(context).pop();
                 }
@@ -154,6 +156,7 @@ class RoomPageState extends State<RoomPage>{
               onPressed: () {
                 setState(() {
                   widget.room.plants.remove(plant);
+                  widget.onUpdated();
                 });
                 Navigator.of(context).pop();
               },
@@ -278,24 +281,26 @@ class RoomPageState extends State<RoomPage>{
               ),
 
         ),
-        Positioned(
-          top: 720,
-          left: 320,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              iconColor: scheme.onSecondary,
-              backgroundColor: scheme.secondary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25), 
+        Align(
+          alignment: Alignment.bottomRight,
+          child : Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                iconColor: scheme.onSecondary,
+                backgroundColor: scheme.secondary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25), 
+                ),
+                padding: EdgeInsets.zero,
+                fixedSize: const Size(60, 60)
               ),
-              padding: EdgeInsets.zero,
-              fixedSize: const Size(60, 60)
+              onPressed: _showAddPlantDialog,
+              child: const Icon(
+                Icons.add,
+                size: 40,
+              )
             ),
-            onPressed: _showAddPlantDialog,
-            child: const Icon(
-              Icons.add,
-              size: 40,
-            )
           ),
         ),
       ],
@@ -309,7 +314,7 @@ class RoomPageState extends State<RoomPage>{
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: scheme.primary,
-        title : Text("Plant Saver", 
+        title : Text(widget.room.name, 
           style: TextStyle(
             color: scheme.onPrimary,
             fontSize: 30,

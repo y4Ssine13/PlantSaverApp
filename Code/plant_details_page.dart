@@ -13,56 +13,83 @@ class PlantDetailsPage extends StatefulWidget {
 
 class PlantDetailsPageState extends State<PlantDetailsPage>{
   Map<String, bool> expansionStates = {"infos" : false, "Soil Moisture" : true, "Temperature" : true, "Light" : true };
-  final String apiUrl = "/channels/";
+  final String apiUrl = "/api/v3/kb/plants/name_search";
   var headers = {
-    'Api-Key': "0I7HI6BMDAQX4CTG",
+    'Api-Key': "fH36TGywxfSPmSSpA6HGsWkB5VhW0oJghMRHaB7y5941k9QnBw",
+    'Content-Type': 'application/json'
   };
   String apikey = "0I7HI6BMDAQX4CTG";
   Map<String, dynamic> data = {};
+  Map<String, dynamic> infos = {};
+
+  bool isLoading = true;
 
   Timer? _timer;
 
-  Future<void> fetchData() async {
+  Future<void> fetchLiveData() async {
     try{
-      print(widget.plant.deviceId != "" ? widget.plant.deviceId : "nothing");
-      print(widget.plant.potDepth != 0 ? widget.plant.potDepth : "zero");
       final response = await http.get(Uri.parse("https://api.thingspeak.com/channels/${widget.plant.deviceId}/feeds.json?api_key=$apikey&results=1"));
 
       if(response.statusCode == 200) {
         String responseBody = response.body;
         var jsonData = jsonDecode(responseBody);
         if(jsonData is Map && jsonData.containsKey("feeds")){
-          print(jsonData["feeds"][0]);
           setState(() {
             data = jsonData["feeds"][0];
+            isLoading = false;
           });
         }
         else{
-          print("No plant names found in the response !!!!!!!");
+          //print("No plant names found in the response !!!!!!!");
+        }
+      }else{
+        //print("Failed to load plants: ${response.statusCode} - ${response.reasonPhrase}");
+      }
+    }
+    catch(error){
+      //print("Error fetching plant: $error");
+    }
+  }
+
+  Future<void> fetchInfo() async {
+    try{
+      var request = http.Request('GET', Uri.parse("https://plant.id/api/v3/kb/plants/${widget.plant.accessToken}?details=common_names,url,image,watering"));
+      request.headers.addAll(headers);
+      http.StreamedResponse response = await request.send();
+      if(response.statusCode == 200){
+        String responseBody = await response.stream.bytesToString();
+        var jsonData = jsonDecode(responseBody);
+        print(responseBody);
+        if(jsonData is Map && jsonData.containsKey("watering")){
+          setState( (){
+            infos = jsonData["watering"] ?? {"max": "no information", "min": "no infomation"};
+          });
+        }else{
+          print("No infos found in the response !!!!!!!");
         }
       }else{
         print("Failed to load plants: ${response.statusCode} - ${response.reasonPhrase}");
       }
-    }
-    catch(error){
-      print("Error fetching plant: $error");
+    }catch(error){
+      print("Error fetching infos: $error");
     }
   }
 
   void startPeriodicTask() {
     _timer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      fetchData();
+      fetchLiveData();
     });
   }
 
   @override
   initState(){
     super.initState();
-    fetchData();
+    fetchLiveData();
+    //fetchInfo();
     startPeriodicTask();
   }
 
-  Widget buildRetractableWidget(String title, {double height = 150, String data = "test"}){
+  Widget buildRetractableWidget(String title, {double height = 150, required Widget child}){
     bool isExpanded = expansionStates[title] ?? false;
     double width = MediaQuery.of(context).size.width - 20;
     return Container(
@@ -140,10 +167,31 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
             height: isExpanded ? height : 0,
             width: width,
             child: isExpanded 
-              ? Center(child: Text(data))
+              ? child
               :null,
           ),
         ], 
+      ),
+    );
+  }
+
+  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0}){
+    int value = data ?? 0;
+    double normalizedValue = (value / maxValue).clamp(0.0, 1.0);
+    double hue = 240.0 - (normalizedValue * 240.0); // Blue (240°) → Green (120°) → Red (0°)
+    return Card(
+      elevation: 10,
+      color: HSVColor.fromAHSV(1.0, hue, 1, 0.7).toColor(),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top : 40, bottom: 40),
+          child: Text(
+            data != null ? "$variable : $data" : "$variable : No Data",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: data == null ? 20 : 40),
+          ),
+        ),
       ),
     );
   }
@@ -152,13 +200,34 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
     return ListView(
       padding: const EdgeInsets.all(10),  
       children: [
-        buildRetractableWidget("infos", height: 350),
-        const Divider(color: Colors.transparent),
-        buildRetractableWidget("Temperature", data : data["field1"]?.toString() ?? "no data"),
-        const Divider(color: Colors.transparent),
-        buildRetractableWidget("Soil Moisture", data : data["field2"]?.toString() ?? "no data"),
-        const Divider(color: Colors.transparent),
-        buildRetractableWidget("Light", data : data["field3"]?.toString() ?? "no data"),
+        buildRetractableWidget(
+          "infos", 
+          height: 350,
+          // child : Expanded(
+          //   child: Column(
+          //     children: [
+          //       Text("watering max: ${infos["max"]}"),
+          //       Text("watering min: ${infos["min"]}"),
+          //     ],
+          //   ),
+          // ),
+          child : Center(child: Text("watering  : max -> ${infos["max"]} | min -> ${infos["min"]}")),
+        ),
+        SizedBox(
+          height : 500,
+          child : isLoading
+          ? const Center(child :CircularProgressIndicator())
+          : Column(
+            children : [
+              const Divider(color: Colors.transparent),
+              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 800, minValue: 50),
+              const Divider(color: Colors.transparent),
+              buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 1000, minValue: 100),
+              const Divider(color: Colors.transparent),
+              buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 700, minValue: 300),
+            ],
+          ),
+        ),
       ],
     );
   }

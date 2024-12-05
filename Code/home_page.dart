@@ -1,8 +1,8 @@
 import "package:flutter/material.dart";
-// import "package:http/http.dart";
 import "room_page.dart";
 import "room.dart";
-// import "package:hive/hive.dart";
+import "package:shared_preferences/shared_preferences.dart";
+import "dart:convert";
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -14,24 +14,26 @@ class HomePage extends StatefulWidget{
 class HomePageState extends State<HomePage>{
   List<Room> roomList = [];
 
-  // @override
-  // void initState(){
-  //   super.initState;
-  //   setState(() {
-  //     final box = Hive.box<Room>("roomBox");
-  //     roomList = box.values.toList().cast<Room>();
-  //   });
-  // }
 
-  // void addRoom(Room room) async{
-  //   final box = Hive.box<Room>("roomBox");
-  //   await box.put(room.name, room);  
-  // }  
+  Future<void> loadData() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? jsonStringList = prefs.getStringList('room_list');
+    setState((){
+      jsonStringList != null ? roomList = jsonStringList.map((jsonString) => Room.fromJson(jsonDecode(jsonString))).toList() : [];
+    });
+  }
 
-  // void deleteRoom(Room room) async{
-  //   final box = Hive.box<Room>("roomBox");
-  //   await box.delete(room.name);
-  // }
+  Future<void> updateData() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> jsonStringList = roomList.map((room) => jsonEncode(room.toJson())).toList();
+    await prefs.setStringList("room_list", jsonStringList);
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    loadData();
+  }
 
   void _showAddRoomDialog() {
     showDialog(
@@ -72,7 +74,7 @@ class HomePageState extends State<HomePage>{
                 {
                   setState(() {
                     roomList.add(room);
-                    // addRoom(room);
+                    updateData();
                   });
                   Navigator.of(context).pop();
                 }
@@ -94,7 +96,7 @@ class HomePageState extends State<HomePage>{
             borderRadius: BorderRadius.circular(20),
           ),
           title: const Text("Are you sure?"),
-          content: Text("Are you sure you want to remove your ${room.name} ?"),
+          content: Text("Are you sure you want to remove your ${room.name} ? All the plants inside will also be deleted."),
           actions: [
             TextButton(
               onPressed: (){
@@ -106,7 +108,7 @@ class HomePageState extends State<HomePage>{
               onPressed: () {
                 setState(() {
                   roomList.remove(room);
-                  // deleteRoom(room);
+                  updateData();
                 });
                 Navigator.of(context).pop();
               },
@@ -124,7 +126,7 @@ class HomePageState extends State<HomePage>{
         Navigator.push(
           context, 
           MaterialPageRoute(
-            builder: (context) => RoomPage(room: room),
+            builder: (context) => RoomPage(room: room, onUpdated: updateData),
           )
         ); 
       },
@@ -214,28 +216,35 @@ class HomePageState extends State<HomePage>{
               itemCount: roomList.length,
             ),
         ),
-        Positioned(
-          top: 720,
-          left: 320,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              iconColor: scheme.onSecondary,
-              backgroundColor: scheme.secondary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25), 
+        Align(
+          alignment: Alignment.bottomRight,
+          child : Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                iconColor: scheme.onSecondary,
+                backgroundColor: scheme.secondary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25), 
+                ),
+                padding: EdgeInsets.zero,
+                fixedSize: const Size(60, 60)
               ),
-              padding: EdgeInsets.zero,
-              fixedSize: const Size(60, 60)
+              onPressed: _showAddRoomDialog,
+              child: const Icon(
+                Icons.add,
+                size: 40,
+              )
             ),
-            onPressed: _showAddRoomDialog,
-            child: const Icon(
-              Icons.add,
-              size: 40,
-            )
           ),
         ),
       ],
     );
+  }
+
+  @override
+  void dispose(){
+    super.dispose();
   }
 
   @override
@@ -252,24 +261,6 @@ class HomePageState extends State<HomePage>{
             fontWeight: FontWeight.bold,
           )
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.add),
-        //     onPressed: (){
-        //       setState(() {
-        //         plantList.add("debug plant $plantList.length + 1");
-        //       });
-        //     }),
-        //   IconButton(
-        //     icon: const Icon(Icons.remove),
-        //     onPressed: (){
-        //       if(plantList.isNotEmpty){
-        //         setState(() {
-        //           plantList.removeLast();
-        //         });
-        //       }
-        //     })
-        // ],
       ),
       body: Container(
         color: scheme.surface,

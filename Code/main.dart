@@ -1,19 +1,15 @@
 import "package:flutter/material.dart";
 import "home_page.dart";
-// import "package:hive_flutter/hive_flutter.dart";
-// import "room.dart";
-// import "plant.dart";
+import 'package:updraft_sdk_flutter/updraft_sdk.dart';
+// import 'package:updraft_sdk_flutter/updraft_sdk_flutter_method_channel.dart';
+// import 'package:updraft_sdk_flutter/updraft_sdk_flutter_platform_interface.dart';
+import 'package:updraft_sdk_flutter/updraft_settings.dart';
 
-void main() async
+void main () async
 {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // await Hive.initFlutter();
-
-  // await Hive.openBox<Room>("roomBox");
-
-  // Hive.registerAdapter(RoomAdapter());
-  // Hive.registerAdapter(PlantAdapter());
-    
+  await UpdraftSdk.init(
+    UpdraftSettings("78760392ee364cea809f40d4d0237b2c", "801db18e627144dfa4646402e115bdfe"),
+  );
   runApp(MyApp());
 }
 
