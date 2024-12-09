@@ -56,7 +56,6 @@ class Plant {
         var jsonData = jsonDecode(responseBody);
         if(jsonData is Map && jsonData.containsKey("feeds")){
             data = jsonData["feeds"][0];
-            print(data);
         }
         else{
           print("No plant names found in the response !!!!!!!");

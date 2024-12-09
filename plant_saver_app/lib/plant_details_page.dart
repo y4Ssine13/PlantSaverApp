@@ -205,11 +205,11 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
           : Column(
             children : [
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 800, minValue: 50),
+              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 50, minValue: 0),
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 1000, minValue: 100),
+              buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 200, minValue: 0),
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 700, minValue: 300),
+              buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 200, minValue: 0),
             ],
           ),
         ),

@@ -16,6 +16,29 @@ class RoomPage extends StatefulWidget{
 }
 
 class RoomPageState extends State<RoomPage>{
+  String apikey = "0I7HI6BMDAQX4CTG";
+  bool isLoading = true;
+
+  Map<Plant, Map<String, dynamic>> dataList = {};
+
+  Future<void> fetchLiveData() async {
+    for(int i = 0; i < widget.room.plants.length; i++)
+    {
+      await widget.room.plants[i].fetchLiveData(apikey);
+      setState(() {
+        dataList[widget.room.plants[i]] = widget.room.plants[i].data;
+      });
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    fetchLiveData();
+  }
 
   Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0}){
     int value = data ?? 0;
@@ -26,12 +49,12 @@ class RoomPageState extends State<RoomPage>{
       color: HSVColor.fromAHSV(1.0, hue, 1, 0.7).toColor(),
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.only(top : 40, bottom: 40),
+          padding: const EdgeInsets.only(top : 5, bottom: 5),
           child: Text(
-            data != null ? "$variable : $data" : "$variable : No Data",
-            style: TextStyle(
+            variable,
+            style: const TextStyle(
               color: Colors.white,
-              fontSize: data == null ? 20 : 40),
+              fontSize: 15),
           ),
         ),
       ),
@@ -187,8 +210,9 @@ class RoomPageState extends State<RoomPage>{
       );
   }
 
-  Widget _buildPlantUI(Plant plant){
+  Widget _buildPlantUI(Plant plant) {
     final scheme = Theme.of(context).colorScheme;
+    Map<String, dynamic> data = dataList[plant] ?? {};
     return GestureDetector(
       onTap:() {
         Navigator.push(
@@ -243,24 +267,63 @@ class RoomPageState extends State<RoomPage>{
                 ],
               ),
             ),
-            Expanded(
+            isLoading 
+            ? const Center(child :CircularProgressIndicator())
+            : Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Text(
-                      plant.type,
-                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                  Card(
+                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    color: scheme.surface.withOpacity(0.9),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical : 4.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child : Text(
+                              plant.name,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: scheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Text(
+                            ":     ",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              plant.type,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: scheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const Column(
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      const Divider(color: Colors.transparent),
-                      // buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 800, minValue: 50),
-                      // const Divider(color: Colors.transparent),
-                      // buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 1000, minValue: 100),
-                      // const Divider(color: Colors.transparent),
-                      // buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 700, minValue: 300),
+                      buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 800, minValue: 50),
+                      buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 1000, minValue: 100),
+                      buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 700, minValue: 300),
                     ],
                   ),
                 ],
@@ -288,7 +351,7 @@ class RoomPageState extends State<RoomPage>{
                 runSpacing: 15.0, // Space between rows
                 padding: const EdgeInsets.all(7.0),
                 alignment: WrapAlignment.start,
-                children: widget.room.plants.map((item) {
+                children: widget.room.plants.map((item){
                   return _buildPlantUI(item);
                 }).toList(),
                 onReorder: (oldIndex, newIndex) {
