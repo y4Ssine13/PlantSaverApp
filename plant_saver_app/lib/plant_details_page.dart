@@ -74,17 +74,17 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
     startPeriodicTask();
   }
 
-  Widget buildRetractableWidget(String title, {double height = 150, required Widget child}){
+  Widget buildRetractableWidget(String title, {double height = 150, required Widget child, required ColorScheme scheme}){
     bool isExpanded = expansionStates[title] ?? false;
     double width = MediaQuery.of(context).size.width - 20;
     return Container(
       width: width ,
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 161, 231, 163),
+        color: scheme.inversePrimary.withOpacity(0.9),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: scheme.shadow.withOpacity(0.5),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -105,7 +105,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
               curve: Curves.easeInOut,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: scheme.primary.withOpacity(0.7),
                 borderRadius: BorderRadius.vertical(
                   top: const Radius.circular(20),
                   bottom: isExpanded ? Radius.zero : const Radius.circular(20),
@@ -116,8 +116,8 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
                 children:[
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: scheme.onPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -128,7 +128,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
                     alignment: Alignment.centerRight,
                     child: Icon(
                       isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: Colors.white,
+                      color: scheme.onPrimary,
                     ),
                   ),
                 ],
@@ -137,15 +137,11 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
           ),
           AnimatedContainer(
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 161, 231, 163),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: scheme.inversePrimary.withOpacity(0.9),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.zero,
+                bottom: Radius.circular(20),
+              ),
             ),
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
@@ -162,13 +158,16 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
     );
   }
 
-  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0, String unity = "%"}){
+  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0, String unity = "%", required ColorScheme scheme}){
     int value = data ?? 0;
     double normalizedValue = (value / maxValue).clamp(0.0, 1.0);
     double hue = 240.0 - (normalizedValue * 240.0); // Blue (240°) → Green (120°) → Red (0°)
     return Card(
       elevation: 10,
-      color: HSVColor.fromAHSV(1.0, hue, 1, 0.7).toColor(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(35),
+      ),
+      color: Color.alphaBlend(HSVColor.fromAHSV(1.0, hue, 1, 0.7).toColor().withOpacity(0.6), scheme.primary),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.only(top : 40, bottom: 40),
@@ -237,6 +236,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
               // buildInfoCard("Plant Type", widget.plant.type, scheme),
             ],
           ),
+          scheme : scheme,
         ),
         SizedBox(
           height : 500,
@@ -245,11 +245,11 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
           : Column(
             children : [
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 50, minValue: 0, unity : "°C"),
+              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 50, minValue: 0, unity : "°C", scheme : scheme),
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 200, minValue: 0),
+              buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 200, minValue: 0, scheme : scheme),
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 200, minValue: 0),
+              buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 200, minValue: 0, scheme : scheme),
             ],
           ),
         ),

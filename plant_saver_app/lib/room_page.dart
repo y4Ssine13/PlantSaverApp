@@ -54,13 +54,13 @@ class RoomPageState extends State<RoomPage>{
     startPeriodicTask();   
   }
 
-  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0}){
+  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0, required ColorScheme scheme}){
     int value = data ?? 0;
     double normalizedValue = (value / maxValue).clamp(0.0, 1.0);
     double hue = 240.0 - (normalizedValue * 240.0); // Blue (240°) → Green (120°) → Red (0°)
     return Card(
       elevation: 10,
-      color: HSVColor.fromAHSV(1.0, hue, 1, 0.7).toColor(),
+      color: Color.alphaBlend(HSVColor.fromAHSV(1.0, hue, 1, 0.7).toColor().withOpacity(0.6), scheme.primary),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.only(top : 5, bottom: 5),
@@ -243,7 +243,7 @@ class RoomPageState extends State<RoomPage>{
         width: (MediaQuery.of(context).size.width - 50) / 2,
         decoration: BoxDecoration(
           color: scheme.inversePrimary.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: scheme.shadow.withOpacity(0.5),
@@ -259,7 +259,7 @@ class RoomPageState extends State<RoomPage>{
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: scheme.primary.withOpacity(0.7),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -284,45 +284,47 @@ class RoomPageState extends State<RoomPage>{
               ),
             ),
             loading
-            ? const Padding(padding: EdgeInsets.all(10), child: Center(child : CircularProgressIndicator()))
+            ? const Expanded(child: Center(child : CircularProgressIndicator()))
             : Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Card(
-                    //margin: const EdgeInsets.symmetric(vertical: 2),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    color: scheme.surface.withOpacity(0.9),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical : 4.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child : Text(
-                              plant.type,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: scheme.onSurface,
+                  Padding(
+                    padding : const EdgeInsets.only(top: 5, bottom : 10),
+                    child : Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      color: scheme.surface.withOpacity(0.9),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical : 6.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child : Text(
+                                plant.type,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: scheme.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      buildLiveDataWidget("Temperature", dataList[plant]?["field1"] == null ? null : int.tryParse(dataList[plant]?["field1"]), maxValue: 50, minValue: 0),
-                      buildLiveDataWidget("Soil Moisture", dataList[plant]?["field2"] == null ? null : (int.tryParse(dataList[plant]?["field2"])), maxValue: 200, minValue: 0),
-                      buildLiveDataWidget("Light", dataList[plant]?["field3"] == null ? null : (int.tryParse(dataList[plant]?["field3"])), maxValue : 200, minValue: 0),
+                      buildLiveDataWidget("Temperature", dataList[plant]?["field1"] == null ? null : int.tryParse(dataList[plant]?["field1"]), maxValue: 50, minValue: 0, scheme : scheme),
+                      buildLiveDataWidget("Soil Moisture", dataList[plant]?["field2"] == null ? null : (int.tryParse(dataList[plant]?["field2"])), maxValue: 200, minValue: 0, scheme : scheme),
+                      buildLiveDataWidget("Light", dataList[plant]?["field3"] == null ? null : (int.tryParse(dataList[plant]?["field3"])), maxValue : 200, minValue: 0, scheme : scheme),
                     ],
                   ),
                 ],
