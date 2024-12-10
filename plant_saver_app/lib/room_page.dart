@@ -1,3 +1,5 @@
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "plant_details_page.dart";
 import "plant_type_page.dart";
@@ -17,27 +19,39 @@ class RoomPage extends StatefulWidget{
 
 class RoomPageState extends State<RoomPage>{
   String apikey = "0I7HI6BMDAQX4CTG";
-  bool isLoading = true;
 
   Map<Plant, Map<String, dynamic>> dataList = {};
+  Map<Plant, bool> isLoading = {};
+
+  Timer? _timer;
 
   Future<void> fetchLiveData() async {
-    for(int i = 0; i < widget.room.plants.length; i++)
-    {
-      await widget.room.plants[i].fetchLiveData(apikey);
-      setState(() {
-        dataList[widget.room.plants[i]] = widget.room.plants[i].data;
-      });
+    Map<Plant, Map<String, dynamic>> tempDataList = {};
+    Map<Plant, bool> tempIsLoading = {};
+    for(var plant in widget.room.plants){
+      await plant.fetchLiveData(apikey);
+      tempDataList[plant] = plant.data;
+      tempIsLoading[plant] = false;
     }
     setState(() {
-      isLoading = false;
+      dataList = tempDataList;
+      isLoading = tempIsLoading;
+    });
+  }
+
+  void startPeriodicTask(){
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      fetchLiveData();
+      // fetchLiveData();
     });
   }
 
   @override
   void initState(){
     super.initState();
-    fetchLiveData();
+    isLoading = { for (var plant in widget.room.plants) plant : true };
+    fetchLiveData(); 
+    startPeriodicTask();   
   }
 
   Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0}){
@@ -166,6 +180,8 @@ class RoomPageState extends State<RoomPage>{
                     widget.room.plants.add(plant);
                     widget.onUpdated();
                   });
+                  isLoading[plant] = true;
+                  fetchLiveData();
                   Navigator.of(context).pop();
                 }
               }, 
@@ -212,7 +228,7 @@ class RoomPageState extends State<RoomPage>{
 
   Widget _buildPlantUI(Plant plant) {
     final scheme = Theme.of(context).colorScheme;
-    Map<String, dynamic> data = dataList[plant] ?? {};
+    bool loading = isLoading[plant] ?? true;
     return GestureDetector(
       onTap:() {
         Navigator.push(
@@ -267,17 +283,17 @@ class RoomPageState extends State<RoomPage>{
                 ],
               ),
             ),
-            isLoading 
-            ? const Center(child :CircularProgressIndicator())
+            loading
+            ? const Padding(padding: EdgeInsets.all(10), child: Center(child : CircularProgressIndicator()))
             : Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Card(
-                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    //margin: const EdgeInsets.symmetric(vertical: 2),
                     elevation: 4,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     color: scheme.surface.withOpacity(0.9),
                     child: Padding(
@@ -285,26 +301,9 @@ class RoomPageState extends State<RoomPage>{
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 1,
                             child : Text(
-                              plant.name,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: scheme.onSurface,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const Text(
-                            ":     ",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
                               plant.type,
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -321,9 +320,9 @@ class RoomPageState extends State<RoomPage>{
                   Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 800, minValue: 50),
-                      buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 1000, minValue: 100),
-                      buildLiveDataWidget("Light", data["field3"] == null ? null : (int.tryParse(data["field3"])), maxValue : 700, minValue: 300),
+                      buildLiveDataWidget("Temperature", dataList[plant]?["field1"] == null ? null : int.tryParse(dataList[plant]?["field1"]), maxValue: 50, minValue: 0),
+                      buildLiveDataWidget("Soil Moisture", dataList[plant]?["field2"] == null ? null : (int.tryParse(dataList[plant]?["field2"])), maxValue: 200, minValue: 0),
+                      buildLiveDataWidget("Light", dataList[plant]?["field3"] == null ? null : (int.tryParse(dataList[plant]?["field3"])), maxValue : 200, minValue: 0),
                     ],
                   ),
                 ],
@@ -392,6 +391,12 @@ class RoomPageState extends State<RoomPage>{
         ),
       ],
     );
+  }
+
+  @override
+  void dispose(){
+    super.dispose();
+    _timer?.cancel();
   }
 
   @override

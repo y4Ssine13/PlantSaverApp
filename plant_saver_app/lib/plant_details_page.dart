@@ -152,7 +152,9 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
             height: isExpanded ? height : 0,
             width: width,
             child: isExpanded 
-              ? child
+              ? SingleChildScrollView(
+                child: child,
+              )
               :null,
           ),
         ], 
@@ -160,7 +162,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
     );
   }
 
-  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0}){
+  Widget buildLiveDataWidget(String variable, int? data, {maxValue = 800, int minValue = 0, String unity = "%"}){
     int value = data ?? 0;
     double normalizedValue = (value / maxValue).clamp(0.0, 1.0);
     double hue = 240.0 - (normalizedValue * 240.0); // Blue (240°) → Green (120°) → Red (0°)
@@ -171,7 +173,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
         child: Padding(
           padding: const EdgeInsets.only(top : 40, bottom: 40),
           child: Text(
-            data != null ? "$variable : $data" : "$variable : No Data",
+            data != null ? "$variable : $data$unity" : "$variable : No Data",
             style: TextStyle(
               color: Colors.white,
               fontSize: data == null ? 20 : 40),
@@ -181,22 +183,60 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
     );
   }
 
+  Widget buildInfoCard(String dataName, String data, ColorScheme scheme){
+    return Container(
+      width : double.infinity,
+      margin: const EdgeInsets.all(10),
+      child : Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        color: scheme.surface.withOpacity(0.9),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical : 4.0),
+          child : RichText(
+            text : TextSpan(
+              text : "$dataName : ",
+              style: TextStyle(
+                fontSize: 16,
+                // fontWeight: FontWeight.bold,
+                color: scheme.onSurface,
+              ),
+              children : [
+                TextSpan(
+                  text : data,
+                  style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: scheme.onSurface,
+              ),
+                ),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildBody(){
+    final scheme = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(10),  
       children: [
         buildRetractableWidget(
           "infos", 
           height: 350,
-          // child : Expanded(
-          //   child: Column(
-          //     children: [
-          //       Text("watering max: ${infos["max"]}"),
-          //       Text("watering min: ${infos["min"]}"),
-          //     ],
-          //   ),
-          // ),
-          child : Center(child: Text("watering  : max -> ${infos["max"]} | min -> ${infos["min"]}")),
+          child: Column(
+            children: [
+              buildInfoCard("Connected Device Id", widget.plant.deviceId, scheme),
+              buildInfoCard("Plant Type", widget.plant.type, scheme),
+              // buildInfoCard("Plant Type", widget.plant.type, scheme),
+            ],
+          ),
         ),
         SizedBox(
           height : 500,
@@ -205,7 +245,7 @@ class PlantDetailsPageState extends State<PlantDetailsPage>{
           : Column(
             children : [
               const Divider(color: Colors.transparent),
-              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 50, minValue: 0),
+              buildLiveDataWidget("Temperature", data["field1"] == null ? null : int.tryParse(data["field1"]), maxValue: 50, minValue: 0, unity : "°C"),
               const Divider(color: Colors.transparent),
               buildLiveDataWidget("Soil Moisture", data["field2"] == null ? null : (int.tryParse(data["field2"])), maxValue: 200, minValue: 0),
               const Divider(color: Colors.transparent),
